@@ -141,6 +141,7 @@ export default function AdminPage() {
             case 'pending': return 'bg-yellow-100 text-yellow-800';
             case 'confirmed': return 'bg-green-100 text-green-800';
             case 'completed': return 'bg-blue-100 text-blue-800';
+            case 'no-show': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
@@ -443,62 +444,440 @@ export default function AdminPage() {
 
                     {activeTab === 'bookings' && (
                         <div className='space-y-6'>
-                            <h2 className='text-2xl font-bold'>Booking Management</h2>
-                            <div className='bg-card rounded-lg border p-6'>
-                                <p className='text-muted-foreground'>
-                                    Booking management interface will be implemented here.
-                                </p>
-                                <p className='mt-2 text-sm'>
-                                    Features: View all bookings, filter by tenant/date, manage statuses, export reports.
-                                </p>
+                            <div className='flex items-center justify-between'>
+                                <h2 className='text-2xl font-bold'>Booking Management</h2>
+                                <div className='flex space-x-2'>
+                                    <button className='border-primary text-primary hover:bg-primary/10 rounded-lg border px-4 py-2'>
+                                        Export Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Booking Stats */}
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
+                                <div className='bg-card rounded-lg border p-4'>
+                                    <p className='text-muted-foreground text-sm'>Today's Bookings</p>
+                                    <p className='text-primary text-2xl font-bold'>32</p>
+                                    <p className='text-green-600 text-xs'>↗ +12% from yesterday</p>
+                                </div>
+                                <div className='bg-card rounded-lg border p-4'>
+                                    <p className='text-muted-foreground text-sm'>Pending Confirmation</p>
+                                    <p className='text-yellow-600 text-2xl font-bold'>8</p>
+                                    <p className='text-muted-foreground text-xs'>Requires attention</p>
+                                </div>
+                                <div className='bg-card rounded-lg border p-4'>
+                                    <p className='text-muted-foreground text-sm'>This Month</p>
+                                    <p className='text-primary text-2xl font-bold'>1,247</p>
+                                    <p className='text-green-600 text-xs'>↗ +23% growth</p>
+                                </div>
+                                <div className='bg-card rounded-lg border p-4'>
+                                    <p className='text-muted-foreground text-sm'>No-Show Rate</p>
+                                    <p className='text-red-600 text-2xl font-bold'>3.2%</p>
+                                    <p className='text-green-600 text-xs'>↓ -1.1% improvement</p>
+                                </div>
+                            </div>
+
+                            {/* Recent Bookings Table */}
+                            <div className='bg-card overflow-hidden rounded-lg border'>
+                                <div className='px-6 py-4 border-b bg-muted'>
+                                    <h3 className='text-lg font-semibold'>Recent Bookings Across All Tenants</h3>
+                                </div>
+                                <table className='w-full'>
+                                    <thead className='bg-muted/50'>
+                                        <tr>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Customer</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Tenant</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Service</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Date & Time</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Amount</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Status</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className='divide-y'>
+                                        {[
+                                            {
+                                                id: '1',
+                                                customer: 'Sarah Johnson',
+                                                tenant: 'beautyspa',
+                                                service: 'Facial Treatment',
+                                                datetime: '2024-01-20 14:00',
+                                                amount: 85,
+                                                status: 'confirmed'
+                                            },
+                                            {
+                                                id: '2',
+                                                customer: 'Mike Chen',
+                                                tenant: 'dentalcare',
+                                                service: 'Teeth Cleaning',
+                                                datetime: '2024-01-20 10:30',
+                                                amount: 120,
+                                                status: 'pending'
+                                            },
+                                            {
+                                                id: '3',
+                                                customer: 'Emma Davis',
+                                                tenant: 'fitnesspro',
+                                                service: 'Personal Training',
+                                                datetime: '2024-01-19 16:00',
+                                                amount: 75,
+                                                status: 'completed'
+                                            },
+                                            {
+                                                id: '4',
+                                                customer: 'John Smith',
+                                                tenant: 'beautyspa',
+                                                service: 'Hair Cut & Style',
+                                                datetime: '2024-01-19 11:00',
+                                                amount: 65,
+                                                status: 'no-show'
+                                            }
+                                        ].map((booking) => (
+                                            <tr key={booking.id}>
+                                                <td className='px-6 py-4'>
+                                                    <div>
+                                                        <p className='font-semibold'>{booking.customer}</p>
+                                                        <p className='text-muted-foreground text-sm'>#{booking.id}</p>
+                                                    </div>
+                                                </td>
+                                                <td className='px-6 py-4'>
+                                                    <span className='bg-primary/10 text-primary rounded px-2 py-1 text-sm'>
+                                                        {booking.tenant}
+                                                    </span>
+                                                </td>
+                                                <td className='px-6 py-4'>{booking.service}</td>
+                                                <td className='px-6 py-4'>
+                                                    <div>
+                                                        <p className='text-sm'>{booking.datetime.split(' ')[0]}</p>
+                                                        <p className='text-muted-foreground text-xs'>{booking.datetime.split(' ')[1]}</p>
+                                                    </div>
+                                                </td>
+                                                <td className='px-6 py-4 font-semibold'>{formatCurrency(booking.amount)}</td>
+                                                <td className='px-6 py-4'>
+                                                    <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(booking.status)}`}>
+                                                        {booking.status}
+                                                    </span>
+                                                </td>
+                                                <td className='px-6 py-4'>
+                                                    <div className='flex space-x-2'>
+                                                        <button className='text-primary text-sm hover:underline'>
+                                                            View
+                                                        </button>
+                                                        {booking.status === 'pending' && (
+                                                            <button className='text-green-600 text-sm hover:underline'>
+                                                                Confirm
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'premium' && (
                         <div className='space-y-6'>
-                            <h2 className='text-2xl font-bold'>Premium Features Management</h2>
-                            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                            <div className='flex items-center justify-between'>
+                                <h2 className='text-2xl font-bold'>Premium Features Management</h2>
+                                <button className='bg-primary text-primary-foreground rounded-lg px-4 py-2'>
+                                    Add New Feature
+                                </button>
+                            </div>
+
+                            {/* Premium Revenue Overview */}
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
                                 <div className='bg-card rounded-lg border p-6'>
-                                    <h3 className='mb-4 text-lg font-semibold'>WhatsApp Notifications</h3>
-                                    <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <span>Premium Activation</span>
-                                            <button className='bg-primary text-primary-foreground rounded px-3 py-1 text-sm'>
-                                                Manage
-                                            </button>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Premium Revenue</p>
+                                            <p className='text-primary text-3xl font-bold'>{formatCurrency(4790)}</p>
+                                            <p className='text-green-600 text-xs'>↗ +15% this month</p>
                                         </div>
-                                        <p className='text-muted-foreground text-sm'>
-                                            Enable WhatsApp business API for premium tenants
-                                        </p>
+                                        <div className='text-3xl'>💰</div>
                                     </div>
                                 </div>
                                 <div className='bg-card rounded-lg border p-6'>
-                                    <h3 className='mb-4 text-lg font-semibold'>Advanced Reporting</h3>
-                                    <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <span>XLS/PDF Export</span>
-                                            <span className='text-green-600'>✓ Enabled</span>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Active Premium Users</p>
+                                            <p className='text-primary text-3xl font-bold'>23</p>
+                                            <p className='text-muted-foreground text-xs'>18.4% of total tenants</p>
                                         </div>
-                                        <p className='text-muted-foreground text-sm'>
-                                            Advanced reporting features for premium tenants
-                                        </p>
+                                        <div className='text-3xl'>⭐</div>
                                     </div>
+                                </div>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Features Active</p>
+                                            <p className='text-primary text-3xl font-bold'>4</p>
+                                            <p className='text-green-600 text-xs'>All features deployed</p>
+                                        </div>
+                                        <div className='text-3xl'>🚀</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Premium Features Grid */}
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                                {premiumFeatures.map((feature) => (
+                                    <div key={feature.id} className='bg-card rounded-lg border p-6'>
+                                        <div className='flex items-center justify-between mb-4'>
+                                            <h3 className='text-lg font-semibold'>{feature.name}</h3>
+                                            <span className='bg-green-100 text-green-800 rounded-full px-2 py-1 text-xs'>
+                                                Active
+                                            </span>
+                                        </div>
+                                        <p className='text-muted-foreground text-sm mb-4'>{feature.description}</p>
+
+                                        <div className='grid grid-cols-2 gap-4 mb-4'>
+                                            <div>
+                                                <p className='text-muted-foreground text-xs'>Active Tenants</p>
+                                                <p className='text-primary text-xl font-bold'>{feature.activeTenants}</p>
+                                            </div>
+                                            <div>
+                                                <p className='text-muted-foreground text-xs'>Monthly Revenue</p>
+                                                <p className='text-primary text-xl font-bold'>{formatCurrency(feature.revenue)}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className='flex space-x-2'>
+                                            <button className='bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded px-3 py-2 text-sm transition-colors'>
+                                                Manage Settings
+                                            </button>
+                                            <button className='border-primary text-primary hover:bg-primary/10 rounded border px-3 py-2 text-sm transition-colors'>
+                                                View Usage
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Feature Usage Analytics */}
+                            <div className='bg-card rounded-lg border p-6'>
+                                <h3 className='text-xl font-semibold mb-4'>Feature Adoption Analytics</h3>
+                                <div className='space-y-4'>
+                                    {premiumFeatures.map((feature) => {
+                                        const adoptionRate = ((feature.activeTenants / stats.premiumTenants) * 100).toFixed(1);
+                                        return (
+                                            <div key={feature.id} className='flex items-center justify-between'>
+                                                <div className='flex-1'>
+                                                    <div className='flex items-center justify-between mb-1'>
+                                                        <span className='text-sm font-medium'>{feature.name}</span>
+                                                        <span className='text-sm text-muted-foreground'>{adoptionRate}%</span>
+                                                    </div>
+                                                    <div className='bg-muted h-2 rounded-full'>
+                                                        <div
+                                                            className='bg-primary h-2 rounded-full transition-all duration-300'
+                                                            style={{ width: `${adoptionRate}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className='ml-4 text-sm text-muted-foreground'>
+                                                    {feature.activeTenants}/{stats.premiumTenants} users
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {activeTab === 'settings' && (
+                    {activeTab === 'financial' && (
                         <div className='space-y-6'>
-                            <h2 className='text-2xl font-bold'>System Settings</h2>
+                            <div className='flex items-center justify-between'>
+                                <h2 className='text-2xl font-bold'>Financial Reports</h2>
+                                <div className='flex space-x-2'>
+                                    <button className='border-primary text-primary hover:bg-primary/10 rounded-lg border px-4 py-2'>
+                                        Export Financial Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Financial Overview */}
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Total Platform Revenue</p>
+                                            <p className='text-primary text-3xl font-bold'>{formatCurrency(stats.totalRevenue)}</p>
+                                            <p className='text-green-600 text-xs'>↗ +18% this quarter</p>
+                                        </div>
+                                        <div className='text-3xl'>💰</div>
+                                    </div>
+                                </div>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Monthly Recurring Revenue</p>
+                                            <p className='text-primary text-3xl font-bold'>{formatCurrency(8450)}</p>
+                                            <p className='text-green-600 text-xs'>↗ +12% growth</p>
+                                        </div>
+                                        <div className='text-3xl'>📈</div>
+                                    </div>
+                                </div>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Average Revenue Per User</p>
+                                            <p className='text-primary text-3xl font-bold'>{formatCurrency(67.6)}</p>
+                                            <p className='text-muted-foreground text-xs'>Per tenant/month</p>
+                                        </div>
+                                        <div className='text-3xl'>💎</div>
+                                    </div>
+                                </div>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <p className='text-muted-foreground text-sm'>Churn Rate</p>
+                                            <p className='text-red-600 text-3xl font-bold'>2.1%</p>
+                                            <p className='text-green-600 text-xs'>↓ -0.5% improvement</p>
+                                        </div>
+                                        <div className='text-3xl'>📉</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Revenue Breakdown */}
+                            <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <h3 className='text-xl font-semibold mb-4'>Revenue by Plan</h3>
+                                    <div className='space-y-4'>
+                                        <div className='flex items-center justify-between'>
+                                            <div className='flex items-center'>
+                                                <div className='w-4 h-4 bg-purple-500 rounded mr-3'></div>
+                                                <span>Enterprise Plan</span>
+                                            </div>
+                                            <div className='text-right'>
+                                                <p className='font-semibold'>{formatCurrency(4950)}</p>
+                                                <p className='text-muted-foreground text-xs'>39.4%</p>
+                                            </div>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <div className='flex items-center'>
+                                                <div className='w-4 h-4 bg-blue-500 rounded mr-3'></div>
+                                                <span>Professional Plan</span>
+                                            </div>
+                                            <div className='text-right'>
+                                                <p className='font-semibold'>{formatCurrency(3625)}</p>
+                                                <p className='text-muted-foreground text-xs'>28.8%</p>
+                                            </div>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <div className='flex items-center'>
+                                                <div className='w-4 h-4 bg-gray-400 rounded mr-3'></div>
+                                                <span>Starter Plan</span>
+                                            </div>
+                                            <div className='text-right'>
+                                                <p className='font-semibold'>{formatCurrency(0)}</p>
+                                                <p className='text-muted-foreground text-xs'>0% (Free)</p>
+                                            </div>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <div className='flex items-center'>
+                                                <div className='w-4 h-4 bg-yellow-500 rounded mr-3'></div>
+                                                <span>Premium Add-ons</span>
+                                            </div>
+                                            <div className='text-right'>
+                                                <p className='font-semibold'>{formatCurrency(3995)}</p>
+                                                <p className='text-muted-foreground text-xs'>31.8%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <h3 className='text-xl font-semibold mb-4'>Top Performing Tenants</h3>
+                                    <div className='space-y-4'>
+                                        {tenants
+                                            .sort((a, b) => b.revenue - a.revenue)
+                                            .slice(0, 4)
+                                            .map((tenant, index) => (
+                                                <div key={tenant.id} className='flex items-center justify-between'>
+                                                    <div className='flex items-center'>
+                                                        <div className='text-muted-foreground mr-3 text-sm w-4'>#{index + 1}</div>
+                                                        <div>
+                                                            <p className='font-semibold'>{tenant.name}</p>
+                                                            <p className='text-muted-foreground text-xs'>{tenant.subdomain}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className='text-right'>
+                                                        <p className='font-semibold'>{formatCurrency(tenant.revenue)}</p>
+                                                        <p className='text-muted-foreground text-xs'>{tenant.bookings} bookings</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Payment Analytics */}
                             <div className='bg-card rounded-lg border p-6'>
-                                <p className='text-muted-foreground'>
-                                    System settings and configuration will be implemented here.
-                                </p>
-                                <p className='mt-2 text-sm'>
-                                    Features: Global settings, API keys, email templates, notification settings.
-                                </p>
+                                <h3 className='text-xl font-semibold mb-4'>Payment Analytics</h3>
+                                <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                                    <div className='text-center'>
+                                        <p className='text-muted-foreground text-sm mb-2'>Transaction Success Rate</p>
+                                        <p className='text-primary text-2xl font-bold'>98.7%</p>
+                                        <p className='text-green-600 text-xs'>↗ +0.3% improvement</p>
+                                    </div>
+                                    <div className='text-center'>
+                                        <p className='text-muted-foreground text-sm mb-2'>Average Transaction Value</p>
+                                        <p className='text-primary text-2xl font-bold'>{formatCurrency(87.50)}</p>
+                                        <p className='text-green-600 text-xs'>↗ +5.2% increase</p>
+                                    </div>
+                                    <div className='text-center'>
+                                        <p className='text-muted-foreground text-sm mb-2'>Failed Payments</p>
+                                        <p className='text-red-600 text-2xl font-bold'>1.3%</p>
+                                        <p className='text-green-600 text-xs'>↓ -0.3% reduction</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Recent Transactions */}
+                            <div className='bg-card overflow-hidden rounded-lg border'>
+                                <div className='px-6 py-4 border-b bg-muted'>
+                                    <h3 className='text-lg font-semibold'>Recent Platform Transactions</h3>
+                                </div>
+                                <table className='w-full'>
+                                    <thead className='bg-muted/50'>
+                                        <tr>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Date</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Tenant</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Plan/Feature</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Amount</th>
+                                            <th className='px-6 py-3 text-left text-sm font-semibold'>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className='divide-y'>
+                                        {[
+                                            { date: '2024-01-20', tenant: 'fitnesspro', plan: 'Enterprise Plan', amount: 99, status: 'completed' },
+                                            { date: '2024-01-20', tenant: 'beautyspa', plan: 'WhatsApp API', amount: 30, status: 'completed' },
+                                            { date: '2024-01-19', tenant: 'dentalcare', plan: 'Professional Plan', amount: 29, status: 'completed' },
+                                            { date: '2024-01-19', tenant: 'homeclean', plan: 'Professional Plan', amount: 29, status: 'failed' },
+                                            { date: '2024-01-18', tenant: 'beautyspa', plan: 'Custom Domain', amount: 10, status: 'completed' }
+                                        ].map((transaction, index) => (
+                                            <tr key={index}>
+                                                <td className='px-6 py-4 text-sm'>{transaction.date}</td>
+                                                <td className='px-6 py-4'>
+                                                    <span className='bg-primary/10 text-primary rounded px-2 py-1 text-sm'>
+                                                        {transaction.tenant}
+                                                    </span>
+                                                </td>
+                                                <td className='px-6 py-4'>{transaction.plan}</td>
+                                                <td className='px-6 py-4 font-semibold'>{formatCurrency(transaction.amount)}</td>
+                                                <td className='px-6 py-4'>
+                                                    <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(transaction.status)}`}>
+                                                        {transaction.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
