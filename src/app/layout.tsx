@@ -1,13 +1,19 @@
 import type { ReactNode } from 'react';
 
 import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google';
 import localFont from 'next/font/local';
 
 import { ThemeProvider } from 'next-themes';
 
-import NavigationBar from '@/app/(delete-this-and-modify-page.tsx)/NavigationBar';
 import '@/app/globals.css';
 import { Toaster } from '@/registry/new-york-v4/ui/sonner';
+
+const poppins = Poppins({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700', '800'],
+    variable: '--font-poppins'
+});
 
 const geistSans = localFont({
     src: './fonts/GeistVF.woff',
@@ -31,9 +37,8 @@ const Layout = ({ children }: Readonly<{ children: ReactNode }>) => {
         // ? https://react.dev/reference/react-dom/client/hydrateRoot#suppressing-unavoidable-hydration-mismatch-errors
         <html suppressHydrationWarning lang='en'>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground overscroll-none antialiased`}>
+                className={`${poppins.variable} ${geistSans.variable} ${geistMono.variable} bg-background text-foreground overscroll-none antialiased`}>
                 <ThemeProvider attribute='class'>
-                    <NavigationBar />
                     {children}
                     <Toaster />
                 </ThemeProvider>
