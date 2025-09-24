@@ -1,0 +1,14 @@
+name = "nextjs-15-starter-shadcn"
+compatibility_date = "2024-09-24"
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "D1"
+database_name = "nextjs-db"
+database_id = "8f100f75-c92f-462c-a87a-0c49b4d75fb7"
+
+[[r2_buckets]]
+binding = "nextjs_r2_bucket"
+bucket_name = "nextjs-r2-bucket"
+
+# Deploy with: npx wrangler pages deploy

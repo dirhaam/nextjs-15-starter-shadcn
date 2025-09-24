@@ -1,9 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('overview');
+    interface Tenant {
+        id: string;
+        name: string;
+        subdomain: string;
+        description?: string;
+        currency: string;
+        language: string;
+        createdAt: number;
+        updatedAt: number;
+        status: string;
+        plan: string;
+        bookings: number;
+        revenue: number;
+        owner: string;
+        joinDate: string;
+        lastActive: string;
+    }
+
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Mock data - in real app this would come from API
     const stats = {
@@ -45,56 +66,71 @@ export default function AdminPage() {
         }
     ];
 
-    const tenants = [
-        {
-            id: '1',
-            name: 'Beauty Spa Elite',
-            subdomain: 'beautyspa',
-            status: 'active',
-            plan: 'professional',
-            bookings: 145,
-            revenue: 12400,
-            owner: 'Sarah Williams',
-            joinDate: '2023-08-15',
-            lastActive: '2024-01-20'
-        },
-        {
-            id: '2',
-            name: 'Dental Care Plus',
-            subdomain: 'dentalcare',
-            status: 'active',
-            plan: 'starter',
-            bookings: 89,
-            revenue: 8900,
-            owner: 'Dr. Michael Chen',
-            joinDate: '2023-09-22',
-            lastActive: '2024-01-19'
-        },
-        {
-            id: '3',
-            name: 'Fitness Pro Studio',
-            subdomain: 'fitnesspro',
-            status: 'active',
-            plan: 'enterprise',
-            bookings: 267,
-            revenue: 18600,
-            owner: 'Jake Thompson',
-            joinDate: '2023-07-10',
-            lastActive: '2024-01-20'
-        },
-        {
-            id: '4',
-            name: 'Home Clean Masters',
-            subdomain: 'homeclean',
-            status: 'suspended',
-            plan: 'starter',
-            bookings: 12,
-            revenue: 450,
-            owner: 'Maria Rodriguez',
-            joinDate: '2024-01-05',
-            lastActive: '2024-01-15'
+    useEffect(() => {
+        const fetchTenants = async () => {
+            try {
+                const res = await fetch('/api/admin/tenants');
+                const data = await res.json();
+                if (data.error) {
+                    setError(data.error);
+                } else {
+                    setTenants(
+                        data.map((t: any) => ({
+                            ...t,
+                            status: 'active',
+                            plan: 'starter',
+                            bookings: 0,
+                            revenue: 0,
+                            owner: 'Unknown',
+                            joinDate: new Date(t.createdAt).toISOString().split('T')[0],
+                            lastActive: new Date(t.updatedAt).toISOString().split('T')[0]
+                        }))
+                    );
+                }
+            } catch (err) {
+                setError('Failed to fetch tenants' as any);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTenants();
+    }, []);
+
+    const handleAddTenant = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const name = formData.get('name');
+        const subdomain = formData.get('subdomain');
+
+        if (!name || !subdomain) return;
+
+        const res = await fetch('/api/admin/tenants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, subdomain })
+        });
+
+        if (res.ok) {
+            const newTenant = await res.json();
+            setTenants((prev) => [
+                ...prev,
+                {
+                    ...newTenant,
+                    status: 'active',
+                    plan: 'starter',
+                    bookings: 0,
+                    revenue: 0,
+                    owner: 'Unknown',
+                    joinDate: new Date(newTenant.createdAt).toISOString().split('T')[0],
+                    lastActive: new Date(newTenant.updatedAt).toISOString().split('T')[0]
+                }
+            ]);
+            e.currentTarget.reset();
+        } else {
+            alert('Failed to add tenant');
         }
-    ];
+    };
 
     const premiumFeatures = [
         {
@@ -136,22 +172,33 @@ export default function AdminPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'bg-green-100 text-green-800';
-            case 'suspended': return 'bg-red-100 text-red-800';
-            case 'pending': return 'bg-yellow-100 text-yellow-800';
-            case 'confirmed': return 'bg-green-100 text-green-800';
-            case 'completed': return 'bg-blue-100 text-blue-800';
-            case 'no-show': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'active':
+                return 'bg-green-100 text-green-800';
+            case 'suspended':
+                return 'bg-red-100 text-red-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'confirmed':
+                return 'bg-green-100 text-green-800';
+            case 'completed':
+                return 'bg-blue-100 text-blue-800';
+            case 'no-show':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
         }
     };
 
     const getPlanColor = (plan: string) => {
         switch (plan) {
-            case 'starter': return 'bg-gray-100 text-gray-800';
-            case 'professional': return 'bg-blue-100 text-blue-800';
-            case 'enterprise': return 'bg-purple-100 text-purple-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'starter':
+                return 'bg-gray-100 text-gray-800';
+            case 'professional':
+                return 'bg-blue-100 text-blue-800';
+            case 'enterprise':
+                return 'bg-purple-100 text-purple-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
         }
     };
 
@@ -229,7 +276,7 @@ export default function AdminPage() {
                             <div className='flex items-center justify-between'>
                                 <h2 className='text-2xl font-bold'>Platform Overview</h2>
                                 <div className='flex items-center space-x-2'>
-                                    <span className='text-sm text-muted-foreground'>Last updated:</span>
+                                    <span className='text-muted-foreground text-sm'>Last updated:</span>
                                     <span className='text-sm font-medium'>{new Date().toLocaleString()}</span>
                                 </div>
                             </div>
@@ -241,7 +288,9 @@ export default function AdminPage() {
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Total Tenants</p>
                                             <p className='text-primary text-3xl font-bold'>{stats.totalTenants}</p>
-                                            <p className='text-green-600 text-xs'>↗ +{stats.monthlyGrowth}% this month</p>
+                                            <p className='text-xs text-green-600'>
+                                                ↗ +{stats.monthlyGrowth}% this month
+                                            </p>
                                         </div>
                                         <div className='text-3xl'>🏢</div>
                                     </div>
@@ -250,8 +299,12 @@ export default function AdminPage() {
                                     <div className='flex items-center justify-between'>
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Active Bookings</p>
-                                            <p className='text-primary text-3xl font-bold'>{stats.activeBookings.toLocaleString()}</p>
-                                            <p className='text-muted-foreground text-xs'>Avg: {stats.avgBookingsPerTenant}/tenant</p>
+                                            <p className='text-primary text-3xl font-bold'>
+                                                {stats.activeBookings.toLocaleString()}
+                                            </p>
+                                            <p className='text-muted-foreground text-xs'>
+                                                Avg: {stats.avgBookingsPerTenant}/tenant
+                                            </p>
                                         </div>
                                         <div className='text-3xl'>📅</div>
                                     </div>
@@ -263,7 +316,7 @@ export default function AdminPage() {
                                             <p className='text-primary text-3xl font-bold'>
                                                 {formatCurrency(stats.totalRevenue)}
                                             </p>
-                                            <p className='text-green-600 text-xs'>↗ Monthly recurring</p>
+                                            <p className='text-xs text-green-600'>↗ Monthly recurring</p>
                                         </div>
                                         <div className='text-3xl'>💰</div>
                                     </div>
@@ -273,7 +326,10 @@ export default function AdminPage() {
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Premium Tenants</p>
                                             <p className='text-primary text-3xl font-bold'>{stats.premiumTenants}</p>
-                                            <p className='text-muted-foreground text-xs'>{((stats.premiumTenants/stats.totalTenants)*100).toFixed(1)}% conversion</p>
+                                            <p className='text-muted-foreground text-xs'>
+                                                {((stats.premiumTenants / stats.totalTenants) * 100).toFixed(1)}%
+                                                conversion
+                                            </p>
                                         </div>
                                         <div className='text-3xl'>⭐</div>
                                     </div>
@@ -293,7 +349,8 @@ export default function AdminPage() {
                                                 <div>
                                                     <p className='font-semibold'>{booking.customer}</p>
                                                     <p className='text-muted-foreground text-sm'>
-                                                        {booking.service} • {booking.tenant} • {formatCurrency(booking.amount)}
+                                                        {booking.service} • {booking.tenant} •{' '}
+                                                        {formatCurrency(booking.amount)}
                                                     </p>
                                                 </div>
                                                 <div className='text-right'>
@@ -315,15 +372,15 @@ export default function AdminPage() {
                                         <div className='flex items-center justify-between'>
                                             <span>Platform Uptime</span>
                                             <div className='flex items-center'>
-                                                <div className='w-2 h-2 bg-green-500 rounded-full mr-2'></div>
-                                                <span className='text-green-600 font-semibold'>99.9%</span>
+                                                <div className='mr-2 h-2 w-2 rounded-full bg-green-500'></div>
+                                                <span className='font-semibold text-green-600'>99.9%</span>
                                             </div>
                                         </div>
                                         <div className='flex items-center justify-between'>
                                             <span>Database Status</span>
                                             <div className='flex items-center'>
-                                                <div className='w-2 h-2 bg-green-500 rounded-full mr-2'></div>
-                                                <span className='text-green-600 font-semibold'>Healthy</span>
+                                                <div className='mr-2 h-2 w-2 rounded-full bg-green-500'></div>
+                                                <span className='font-semibold text-green-600'>Healthy</span>
                                             </div>
                                         </div>
                                         <div className='flex items-center justify-between'>
@@ -361,7 +418,14 @@ export default function AdminPage() {
                             <div className='space-y-4'>
                                 <div className='flex items-center justify-between'>
                                     <h2 className='text-2xl font-bold'>Tenant Management</h2>
-                                    <button className='bg-primary text-primary-foreground rounded-lg px-4 py-2'>
+                                    <button
+                                        className='bg-primary text-primary-foreground rounded-lg px-4 py-2'
+                                        onClick={() => {
+                                            const modal = document.getElementById(
+                                                'add-tenant-modal'
+                                            ) as HTMLDialogElement;
+                                            if (modal) modal.showModal();
+                                        }}>
                                         Add New Tenant
                                     </button>
                                 </div>
@@ -372,6 +436,9 @@ export default function AdminPage() {
                                     </p>
                                 </div>
                             </div>
+
+                            {loading && <p>Loading tenants...</p>}
+                            {error && <p>Error: {error}</p>}
 
                             <div className='bg-card overflow-hidden rounded-lg border'>
                                 <table className='w-full'>
@@ -439,6 +506,42 @@ export default function AdminPage() {
                                     </tbody>
                                 </table>
                             </div>
+
+                            <dialog id='add-tenant-modal' className='bg-background rounded-lg p-6'>
+                                <h3 className='mb-4 text-lg font-semibold'>Add New Tenant</h3>
+                                <form onSubmit={handleAddTenant} className='space-y-4'>
+                                    <input
+                                        name='name'
+                                        placeholder='Tenant Name'
+                                        className='w-full rounded border p-2'
+                                        required
+                                    />
+                                    <input
+                                        name='subdomain'
+                                        placeholder='Subdomain'
+                                        className='w-full rounded border p-2'
+                                        required
+                                    />
+                                    <div className='flex justify-end space-x-2'>
+                                        <button
+                                            type='button'
+                                            onClick={() => {
+                                                const modal = document.getElementById(
+                                                    'add-tenant-modal'
+                                                ) as HTMLDialogElement;
+                                                if (modal) modal.close();
+                                            }}
+                                            className='rounded border px-4 py-2'>
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type='submit'
+                                            className='bg-primary text-primary-foreground rounded px-4 py-2'>
+                                            Add
+                                        </button>
+                                    </div>
+                                </form>
+                            </dialog>
                         </div>
                     )}
 
@@ -458,28 +561,28 @@ export default function AdminPage() {
                                 <div className='bg-card rounded-lg border p-4'>
                                     <p className='text-muted-foreground text-sm'>Today's Bookings</p>
                                     <p className='text-primary text-2xl font-bold'>32</p>
-                                    <p className='text-green-600 text-xs'>↗ +12% from yesterday</p>
+                                    <p className='text-xs text-green-600'>↗ +12% from yesterday</p>
                                 </div>
                                 <div className='bg-card rounded-lg border p-4'>
                                     <p className='text-muted-foreground text-sm'>Pending Confirmation</p>
-                                    <p className='text-yellow-600 text-2xl font-bold'>8</p>
+                                    <p className='text-2xl font-bold text-yellow-600'>8</p>
                                     <p className='text-muted-foreground text-xs'>Requires attention</p>
                                 </div>
                                 <div className='bg-card rounded-lg border p-4'>
                                     <p className='text-muted-foreground text-sm'>This Month</p>
                                     <p className='text-primary text-2xl font-bold'>1,247</p>
-                                    <p className='text-green-600 text-xs'>↗ +23% growth</p>
+                                    <p className='text-xs text-green-600'>↗ +23% growth</p>
                                 </div>
                                 <div className='bg-card rounded-lg border p-4'>
                                     <p className='text-muted-foreground text-sm'>No-Show Rate</p>
-                                    <p className='text-red-600 text-2xl font-bold'>3.2%</p>
-                                    <p className='text-green-600 text-xs'>↓ -1.1% improvement</p>
+                                    <p className='text-2xl font-bold text-red-600'>3.2%</p>
+                                    <p className='text-xs text-green-600'>↓ -1.1% improvement</p>
                                 </div>
                             </div>
 
                             {/* Recent Bookings Table */}
                             <div className='bg-card overflow-hidden rounded-lg border'>
-                                <div className='px-6 py-4 border-b bg-muted'>
+                                <div className='bg-muted border-b px-6 py-4'>
                                     <h3 className='text-lg font-semibold'>Recent Bookings Across All Tenants</h3>
                                 </div>
                                 <table className='w-full'>
@@ -549,12 +652,17 @@ export default function AdminPage() {
                                                 <td className='px-6 py-4'>
                                                     <div>
                                                         <p className='text-sm'>{booking.datetime.split(' ')[0]}</p>
-                                                        <p className='text-muted-foreground text-xs'>{booking.datetime.split(' ')[1]}</p>
+                                                        <p className='text-muted-foreground text-xs'>
+                                                            {booking.datetime.split(' ')[1]}
+                                                        </p>
                                                     </div>
                                                 </td>
-                                                <td className='px-6 py-4 font-semibold'>{formatCurrency(booking.amount)}</td>
+                                                <td className='px-6 py-4 font-semibold'>
+                                                    {formatCurrency(booking.amount)}
+                                                </td>
                                                 <td className='px-6 py-4'>
-                                                    <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(booking.status)}`}>
+                                                    <span
+                                                        className={`rounded-full px-2 py-1 text-xs ${getStatusColor(booking.status)}`}>
                                                         {booking.status}
                                                     </span>
                                                 </td>
@@ -564,7 +672,7 @@ export default function AdminPage() {
                                                             View
                                                         </button>
                                                         {booking.status === 'pending' && (
-                                                            <button className='text-green-600 text-sm hover:underline'>
+                                                            <button className='text-sm text-green-600 hover:underline'>
                                                                 Confirm
                                                             </button>
                                                         )}
@@ -594,7 +702,7 @@ export default function AdminPage() {
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Premium Revenue</p>
                                             <p className='text-primary text-3xl font-bold'>{formatCurrency(4790)}</p>
-                                            <p className='text-green-600 text-xs'>↗ +15% this month</p>
+                                            <p className='text-xs text-green-600'>↗ +15% this month</p>
                                         </div>
                                         <div className='text-3xl'>💰</div>
                                     </div>
@@ -614,7 +722,7 @@ export default function AdminPage() {
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Features Active</p>
                                             <p className='text-primary text-3xl font-bold'>4</p>
-                                            <p className='text-green-600 text-xs'>All features deployed</p>
+                                            <p className='text-xs text-green-600'>All features deployed</p>
                                         </div>
                                         <div className='text-3xl'>🚀</div>
                                     </div>
@@ -625,22 +733,26 @@ export default function AdminPage() {
                             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                                 {premiumFeatures.map((feature) => (
                                     <div key={feature.id} className='bg-card rounded-lg border p-6'>
-                                        <div className='flex items-center justify-between mb-4'>
+                                        <div className='mb-4 flex items-center justify-between'>
                                             <h3 className='text-lg font-semibold'>{feature.name}</h3>
-                                            <span className='bg-green-100 text-green-800 rounded-full px-2 py-1 text-xs'>
+                                            <span className='rounded-full bg-green-100 px-2 py-1 text-xs text-green-800'>
                                                 Active
                                             </span>
                                         </div>
-                                        <p className='text-muted-foreground text-sm mb-4'>{feature.description}</p>
+                                        <p className='text-muted-foreground mb-4 text-sm'>{feature.description}</p>
 
-                                        <div className='grid grid-cols-2 gap-4 mb-4'>
+                                        <div className='mb-4 grid grid-cols-2 gap-4'>
                                             <div>
                                                 <p className='text-muted-foreground text-xs'>Active Tenants</p>
-                                                <p className='text-primary text-xl font-bold'>{feature.activeTenants}</p>
+                                                <p className='text-primary text-xl font-bold'>
+                                                    {feature.activeTenants}
+                                                </p>
                                             </div>
                                             <div>
                                                 <p className='text-muted-foreground text-xs'>Monthly Revenue</p>
-                                                <p className='text-primary text-xl font-bold'>{formatCurrency(feature.revenue)}</p>
+                                                <p className='text-primary text-xl font-bold'>
+                                                    {formatCurrency(feature.revenue)}
+                                                </p>
                                             </div>
                                         </div>
 
@@ -658,16 +770,22 @@ export default function AdminPage() {
 
                             {/* Feature Usage Analytics */}
                             <div className='bg-card rounded-lg border p-6'>
-                                <h3 className='text-xl font-semibold mb-4'>Feature Adoption Analytics</h3>
+                                <h3 className='mb-4 text-xl font-semibold'>Feature Adoption Analytics</h3>
                                 <div className='space-y-4'>
                                     {premiumFeatures.map((feature) => {
-                                        const adoptionRate = ((feature.activeTenants / stats.premiumTenants) * 100).toFixed(1);
+                                        const adoptionRate = (
+                                            (feature.activeTenants / stats.premiumTenants) *
+                                            100
+                                        ).toFixed(1);
+
                                         return (
                                             <div key={feature.id} className='flex items-center justify-between'>
                                                 <div className='flex-1'>
-                                                    <div className='flex items-center justify-between mb-1'>
+                                                    <div className='mb-1 flex items-center justify-between'>
                                                         <span className='text-sm font-medium'>{feature.name}</span>
-                                                        <span className='text-sm text-muted-foreground'>{adoptionRate}%</span>
+                                                        <span className='text-muted-foreground text-sm'>
+                                                            {adoptionRate}%
+                                                        </span>
                                                     </div>
                                                     <div className='bg-muted h-2 rounded-full'>
                                                         <div
@@ -676,7 +794,7 @@ export default function AdminPage() {
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className='ml-4 text-sm text-muted-foreground'>
+                                                <div className='text-muted-foreground ml-4 text-sm'>
                                                     {feature.activeTenants}/{stats.premiumTenants} users
                                                 </div>
                                             </div>
@@ -704,8 +822,10 @@ export default function AdminPage() {
                                     <div className='flex items-center justify-between'>
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Total Platform Revenue</p>
-                                            <p className='text-primary text-3xl font-bold'>{formatCurrency(stats.totalRevenue)}</p>
-                                            <p className='text-green-600 text-xs'>↗ +18% this quarter</p>
+                                            <p className='text-primary text-3xl font-bold'>
+                                                {formatCurrency(stats.totalRevenue)}
+                                            </p>
+                                            <p className='text-xs text-green-600'>↗ +18% this quarter</p>
                                         </div>
                                         <div className='text-3xl'>💰</div>
                                     </div>
@@ -715,7 +835,7 @@ export default function AdminPage() {
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Monthly Recurring Revenue</p>
                                             <p className='text-primary text-3xl font-bold'>{formatCurrency(8450)}</p>
-                                            <p className='text-green-600 text-xs'>↗ +12% growth</p>
+                                            <p className='text-xs text-green-600'>↗ +12% growth</p>
                                         </div>
                                         <div className='text-3xl'>📈</div>
                                     </div>
@@ -734,8 +854,8 @@ export default function AdminPage() {
                                     <div className='flex items-center justify-between'>
                                         <div>
                                             <p className='text-muted-foreground text-sm'>Churn Rate</p>
-                                            <p className='text-red-600 text-3xl font-bold'>2.1%</p>
-                                            <p className='text-green-600 text-xs'>↓ -0.5% improvement</p>
+                                            <p className='text-3xl font-bold text-red-600'>2.1%</p>
+                                            <p className='text-xs text-green-600'>↓ -0.5% improvement</p>
                                         </div>
                                         <div className='text-3xl'>📉</div>
                                     </div>
@@ -745,11 +865,11 @@ export default function AdminPage() {
                             {/* Revenue Breakdown */}
                             <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                                 <div className='bg-card rounded-lg border p-6'>
-                                    <h3 className='text-xl font-semibold mb-4'>Revenue by Plan</h3>
+                                    <h3 className='mb-4 text-xl font-semibold'>Revenue by Plan</h3>
                                     <div className='space-y-4'>
                                         <div className='flex items-center justify-between'>
                                             <div className='flex items-center'>
-                                                <div className='w-4 h-4 bg-purple-500 rounded mr-3'></div>
+                                                <div className='mr-3 h-4 w-4 rounded bg-purple-500'></div>
                                                 <span>Enterprise Plan</span>
                                             </div>
                                             <div className='text-right'>
@@ -759,7 +879,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className='flex items-center justify-between'>
                                             <div className='flex items-center'>
-                                                <div className='w-4 h-4 bg-blue-500 rounded mr-3'></div>
+                                                <div className='mr-3 h-4 w-4 rounded bg-blue-500'></div>
                                                 <span>Professional Plan</span>
                                             </div>
                                             <div className='text-right'>
@@ -769,7 +889,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className='flex items-center justify-between'>
                                             <div className='flex items-center'>
-                                                <div className='w-4 h-4 bg-gray-400 rounded mr-3'></div>
+                                                <div className='mr-3 h-4 w-4 rounded bg-gray-400'></div>
                                                 <span>Starter Plan</span>
                                             </div>
                                             <div className='text-right'>
@@ -779,7 +899,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className='flex items-center justify-between'>
                                             <div className='flex items-center'>
-                                                <div className='w-4 h-4 bg-yellow-500 rounded mr-3'></div>
+                                                <div className='mr-3 h-4 w-4 rounded bg-yellow-500'></div>
                                                 <span>Premium Add-ons</span>
                                             </div>
                                             <div className='text-right'>
@@ -791,7 +911,7 @@ export default function AdminPage() {
                                 </div>
 
                                 <div className='bg-card rounded-lg border p-6'>
-                                    <h3 className='text-xl font-semibold mb-4'>Top Performing Tenants</h3>
+                                    <h3 className='mb-4 text-xl font-semibold'>Top Performing Tenants</h3>
                                     <div className='space-y-4'>
                                         {tenants
                                             .sort((a, b) => b.revenue - a.revenue)
@@ -799,15 +919,23 @@ export default function AdminPage() {
                                             .map((tenant, index) => (
                                                 <div key={tenant.id} className='flex items-center justify-between'>
                                                     <div className='flex items-center'>
-                                                        <div className='text-muted-foreground mr-3 text-sm w-4'>#{index + 1}</div>
+                                                        <div className='text-muted-foreground mr-3 w-4 text-sm'>
+                                                            #{index + 1}
+                                                        </div>
                                                         <div>
                                                             <p className='font-semibold'>{tenant.name}</p>
-                                                            <p className='text-muted-foreground text-xs'>{tenant.subdomain}</p>
+                                                            <p className='text-muted-foreground text-xs'>
+                                                                {tenant.subdomain}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className='text-right'>
-                                                        <p className='font-semibold'>{formatCurrency(tenant.revenue)}</p>
-                                                        <p className='text-muted-foreground text-xs'>{tenant.bookings} bookings</p>
+                                                        <p className='font-semibold'>
+                                                            {formatCurrency(tenant.revenue)}
+                                                        </p>
+                                                        <p className='text-muted-foreground text-xs'>
+                                                            {tenant.bookings} bookings
+                                                        </p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -817,29 +945,29 @@ export default function AdminPage() {
 
                             {/* Payment Analytics */}
                             <div className='bg-card rounded-lg border p-6'>
-                                <h3 className='text-xl font-semibold mb-4'>Payment Analytics</h3>
+                                <h3 className='mb-4 text-xl font-semibold'>Payment Analytics</h3>
                                 <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
                                     <div className='text-center'>
-                                        <p className='text-muted-foreground text-sm mb-2'>Transaction Success Rate</p>
+                                        <p className='text-muted-foreground mb-2 text-sm'>Transaction Success Rate</p>
                                         <p className='text-primary text-2xl font-bold'>98.7%</p>
-                                        <p className='text-green-600 text-xs'>↗ +0.3% improvement</p>
+                                        <p className='text-xs text-green-600'>↗ +0.3% improvement</p>
                                     </div>
                                     <div className='text-center'>
-                                        <p className='text-muted-foreground text-sm mb-2'>Average Transaction Value</p>
-                                        <p className='text-primary text-2xl font-bold'>{formatCurrency(87.50)}</p>
-                                        <p className='text-green-600 text-xs'>↗ +5.2% increase</p>
+                                        <p className='text-muted-foreground mb-2 text-sm'>Average Transaction Value</p>
+                                        <p className='text-primary text-2xl font-bold'>{formatCurrency(87.5)}</p>
+                                        <p className='text-xs text-green-600'>↗ +5.2% increase</p>
                                     </div>
                                     <div className='text-center'>
-                                        <p className='text-muted-foreground text-sm mb-2'>Failed Payments</p>
-                                        <p className='text-red-600 text-2xl font-bold'>1.3%</p>
-                                        <p className='text-green-600 text-xs'>↓ -0.3% reduction</p>
+                                        <p className='text-muted-foreground mb-2 text-sm'>Failed Payments</p>
+                                        <p className='text-2xl font-bold text-red-600'>1.3%</p>
+                                        <p className='text-xs text-green-600'>↓ -0.3% reduction</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Recent Transactions */}
                             <div className='bg-card overflow-hidden rounded-lg border'>
-                                <div className='px-6 py-4 border-b bg-muted'>
+                                <div className='bg-muted border-b px-6 py-4'>
                                     <h3 className='text-lg font-semibold'>Recent Platform Transactions</h3>
                                 </div>
                                 <table className='w-full'>
@@ -854,11 +982,41 @@ export default function AdminPage() {
                                     </thead>
                                     <tbody className='divide-y'>
                                         {[
-                                            { date: '2024-01-20', tenant: 'fitnesspro', plan: 'Enterprise Plan', amount: 99, status: 'completed' },
-                                            { date: '2024-01-20', tenant: 'beautyspa', plan: 'WhatsApp API', amount: 30, status: 'completed' },
-                                            { date: '2024-01-19', tenant: 'dentalcare', plan: 'Professional Plan', amount: 29, status: 'completed' },
-                                            { date: '2024-01-19', tenant: 'homeclean', plan: 'Professional Plan', amount: 29, status: 'failed' },
-                                            { date: '2024-01-18', tenant: 'beautyspa', plan: 'Custom Domain', amount: 10, status: 'completed' }
+                                            {
+                                                date: '2024-01-20',
+                                                tenant: 'fitnesspro',
+                                                plan: 'Enterprise Plan',
+                                                amount: 99,
+                                                status: 'completed'
+                                            },
+                                            {
+                                                date: '2024-01-20',
+                                                tenant: 'beautyspa',
+                                                plan: 'WhatsApp API',
+                                                amount: 30,
+                                                status: 'completed'
+                                            },
+                                            {
+                                                date: '2024-01-19',
+                                                tenant: 'dentalcare',
+                                                plan: 'Professional Plan',
+                                                amount: 29,
+                                                status: 'completed'
+                                            },
+                                            {
+                                                date: '2024-01-19',
+                                                tenant: 'homeclean',
+                                                plan: 'Professional Plan',
+                                                amount: 29,
+                                                status: 'failed'
+                                            },
+                                            {
+                                                date: '2024-01-18',
+                                                tenant: 'beautyspa',
+                                                plan: 'Custom Domain',
+                                                amount: 10,
+                                                status: 'completed'
+                                            }
                                         ].map((transaction, index) => (
                                             <tr key={index}>
                                                 <td className='px-6 py-4 text-sm'>{transaction.date}</td>
@@ -868,9 +1026,12 @@ export default function AdminPage() {
                                                     </span>
                                                 </td>
                                                 <td className='px-6 py-4'>{transaction.plan}</td>
-                                                <td className='px-6 py-4 font-semibold'>{formatCurrency(transaction.amount)}</td>
+                                                <td className='px-6 py-4 font-semibold'>
+                                                    {formatCurrency(transaction.amount)}
+                                                </td>
                                                 <td className='px-6 py-4'>
-                                                    <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(transaction.status)}`}>
+                                                    <span
+                                                        className={`rounded-full px-2 py-1 text-xs ${getStatusColor(transaction.status)}`}>
                                                         {transaction.status}
                                                     </span>
                                                 </td>

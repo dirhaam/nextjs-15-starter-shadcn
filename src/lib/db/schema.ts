@@ -1,7 +1,10 @@
+import { sql } from 'drizzle-orm';
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const tenants = sqliteTable('tenants', {
-    id: text('id').primaryKey(),
+    id: text('id')
+        .primaryKey()
+        .default(sql`uuid()`),
     name: text('name').notNull(),
     subdomain: text('subdomain').notNull().unique(),
     domain: text('domain'),
