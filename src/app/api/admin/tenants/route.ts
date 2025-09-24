@@ -13,7 +13,7 @@ const d1 = (globalThis as any).D1;
 if (d1) {
     db = createD1Db(d1);
 } else {
-    db = await createLocalDb();
+    db = createLocalDb();
 }
 
 export async function GET() {
@@ -22,7 +22,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'superadmin') {
+    if ((session.user as any).role !== 'superadmin') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'superadmin') {
+    if ((session.user as any).role !== 'superadmin') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     const newTenant = await db
         .insert(tenants)
         .values({
+            id: randomUUID(),
             name,
             subdomain,
             description,
@@ -70,4 +71,73 @@ export async function POST(request: NextRequest) {
     // Create superadmin user for the tenant? Or handle separately. For now, just tenant.
 
     return NextResponse.json(newTenant[0], { status: 201 });
+}
+
+export async function PUT(request: NextRequest) {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if ((session.user as any).role !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { id, name, subdomain, description, currency, language } = body;
+
+    if (!id || !name || !subdomain) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Check if subdomain exists for other tenant
+    const existing = await db.select().from(tenants).where(eq(tenants.subdomain, subdomain));
+    if (existing.length > 0 && existing[0].id !== id) {
+        return NextResponse.json({ error: 'Subdomain already exists' }, { status: 409 });
+    }
+
+    const updatedTenant = await db
+        .update(tenants)
+        .set({
+            name,
+            subdomain,
+            description,
+            currency,
+            language,
+            updatedAt: new Date()
+        })
+        .where(eq(tenants.id, id))
+        .returning();
+
+    if (updatedTenant.length === 0) {
+        return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedTenant[0], { status: 200 });
+}
+
+export async function DELETE(request: NextRequest) {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if ((session.user as any).role !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+        return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    }
+
+    const deletedTenant = await db.delete(tenants).where(eq(tenants.id, id)).returning();
+
+    if (deletedTenant.length === 0) {
+        return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Tenant deleted' }, { status: 200 });
 }

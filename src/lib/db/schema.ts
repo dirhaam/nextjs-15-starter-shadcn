@@ -20,8 +20,10 @@ export const tenants = sqliteTable('tenants', {
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
 
-export const users = sqliteTable('users', {
-    id: text('id').primaryKey(),
+export const user = sqliteTable('user', {
+    id: text('id')
+        .primaryKey()
+        .default(sql`uuid()`),
     email: text('email').notNull().unique(),
     password: text('password'),
     name: text('name'),
@@ -30,6 +32,46 @@ export const users = sqliteTable('users', {
         .references(() => tenants.id)
         .notNull(),
     isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const session = sqliteTable('session', {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+        .notNull()
+        .references(() => user.id),
+    token: text('token').notNull().unique(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    tenantId: text('tenant_id')
+});
+
+export const account = sqliteTable('account', {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+        .notNull()
+        .references(() => user.id),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
+    refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
+    scope: text('scope'),
+    idToken: text('id_token'),
+    password: text('password'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const verification = sqliteTable('verification', {
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
@@ -53,7 +95,7 @@ export const bookings = sqliteTable('bookings', {
     tenantId: text('tenant_id')
         .references(() => tenants.id)
         .notNull(),
-    userId: text('user_id').references(() => users.id),
+    userId: text('user_id').references(() => user.id),
     serviceId: text('service_id')
         .references(() => services.id)
         .notNull(),
@@ -81,7 +123,7 @@ export const reviews = sqliteTable('reviews', {
     bookingId: text('booking_id')
         .references(() => bookings.id)
         .notNull(),
-    userId: text('user_id').references(() => users.id),
+    userId: text('user_id').references(() => user.id),
     rating: integer('rating').notNull(), // 1-5
     comment: text('comment'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
@@ -103,7 +145,9 @@ export const notifications = sqliteTable('notifications', {
 });
 
 export const landingPages = sqliteTable('landing_pages', {
-    id: text('id').primaryKey(),
+    id: text('id')
+        .primaryKey()
+        .default(sql`uuid()`),
     tenantId: text('tenant_id')
         .references(() => tenants.id)
         .notNull(),
@@ -117,6 +161,35 @@ export const landingPages = sqliteTable('landing_pages', {
     phone: text('phone'),
     email: text('email'),
     isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const tenantFeatures = sqliteTable('tenant_features', {
+    id: text('id')
+        .primaryKey()
+        .default(sql`uuid()`),
+    tenantId: text('tenant_id')
+        .references(() => tenants.id)
+        .notNull(),
+    featureName: text('feature_name').notNull(),
+    isEnabled: integer('is_enabled', { mode: 'boolean' }).default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const userRoles = sqliteTable('user_roles', {
+    id: text('id')
+        .primaryKey()
+        .default(sql`uuid()`),
+    userId: text('user_id')
+        .references(() => user.id)
+        .notNull(),
+    tenantId: text('tenant_id')
+        .references(() => tenants.id)
+        .notNull(),
+    role: text('role').notNull(),
+    permissions: text('permissions'), // JSON array of strings
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });

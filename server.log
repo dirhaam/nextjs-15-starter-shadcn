@@ -1,0 +1,37 @@
+
+> nextjs-15-starter-shadcn@1.0.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.4.6 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.249:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 243ms
+ ✓ Ready in 1659ms
+ ✓ Compiled middleware in 4ms
+ ✓ Compiled in 11ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled in 10ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 4.5s
+ GET /login 200 in 5204ms
+ ✓ Compiled /favicon.ico in 401ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 728ms
+ ○ Compiling /api/auth/[...better-auth] ...
+ ✓ Compiled /api/auth/[...better-auth] in 921ms
+[2m2025-09-24T06:41:11.105Z[0m [31mERROR[0m [1m[Better Auth]:[0m TypeError [TypeError: db2.insert is not a function]
+# SERVER_ERROR:  [TypeError: db2.insert is not a function]
+ POST /api/auth/sign-in/social 500 in 2363ms
+[2m2025-09-24T06:41:15.576Z[0m [31mERROR[0m [1m[Better Auth]:[0m TypeError [TypeError: db2.select is not a function]
+# SERVER_ERROR:  [TypeError: db2.select is not a function]
+ POST /api/auth/sign-in/email 500 in 271ms
+ GET /login 200 in 146ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 299ms
+[2m2025-09-24T06:44:39.361Z[0m [31mERROR[0m [1m[Better Auth]:[0m TypeError [TypeError: db2.insert is not a function]
+# SERVER_ERROR:  [TypeError: db2.insert is not a function]
+ POST /api/auth/sign-in/social 500 in 481ms
+[2m2025-09-24T06:46:50.346Z[0m [31mERROR[0m [1m[Better Auth]:[0m TypeError [TypeError: db2.select is not a function]
+# SERVER_ERROR:  [TypeError: db2.select is not a function]
+ POST /api/auth/sign-in/email 500 in 298ms

@@ -2,15 +2,23 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
+import { authClient } from '@/lib/auth-client';
+
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
 export default function AdminPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('overview');
+    const [currentTime, setCurrentTime] = useState('');
     interface Tenant {
         id: string;
         name: string;
         subdomain: string;
         description?: string;
-        currency: string;
-        language: string;
+        currency?: string;
+        language?: string;
         createdAt: number;
         updatedAt: number;
         status: string;
@@ -95,6 +103,13 @@ export default function AdminPage() {
         };
 
         fetchTenants();
+
+        // Set initial time client-side to avoid hydration mismatch
+        setCurrentTime(new Date().toLocaleString());
+
+        const timer = setInterval(() => setCurrentTime(new Date().toLocaleString()), 1000);
+
+        return () => clearInterval(timer);
     }, []);
 
     const handleAddTenant = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -202,6 +217,10 @@ export default function AdminPage() {
         }
     };
 
+    if (loading) {
+        return <div className='p-8'>Loading dashboard...</div>;
+    }
+
     return (
         <div className='bg-background min-h-screen'>
             {/* Header */}
@@ -213,7 +232,13 @@ export default function AdminPage() {
                             ← Back to Landing Page
                         </a>
                         <span className='text-muted-foreground text-sm'>Welcome, Admin</span>
-                        <button className='bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm'>
+                        <span className='text-sm font-medium'>{currentTime}</span>
+                        <button
+                            className='bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm'
+                            onClick={async () => {
+                                await authClient.signOut();
+                                router.push('/');
+                            }}>
                             Logout
                         </button>
                     </div>
@@ -277,7 +302,7 @@ export default function AdminPage() {
                                 <h2 className='text-2xl font-bold'>Platform Overview</h2>
                                 <div className='flex items-center space-x-2'>
                                     <span className='text-muted-foreground text-sm'>Last updated:</span>
-                                    <span className='text-sm font-medium'>{new Date().toLocaleString()}</span>
+                                    <span className='text-sm font-medium'>{currentTime}</span>
                                 </div>
                             </div>
 
@@ -1039,6 +1064,103 @@ export default function AdminPage() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'system' && (
+                        <div className='space-y-6'>
+                            <div className='flex items-center justify-between'>
+                                <h2 className='text-2xl font-bold'>System Settings</h2>
+                                <button className='bg-primary text-primary-foreground rounded-lg px-4 py-2'>
+                                    Save Changes
+                                </button>
+                            </div>
+
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <h3 className='mb-4 text-lg font-semibold'>Platform Configuration</h3>
+                                    <div className='space-y-4'>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>Platform Name</label>
+                                            <input
+                                                type='text'
+                                                value='Booqing'
+                                                className='ml-auto w-48 rounded border p-2'
+                                            />
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>Default Currency</label>
+                                            <select className='ml-auto w-48 rounded border p-2'>
+                                                <option>USD</option>
+                                                <option>EUR</option>
+                                                <option>IDR</option>
+                                            </select>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>Default Language</label>
+                                            <select className='ml-auto w-48 rounded border p-2'>
+                                                <option>en</option>
+                                                <option>id</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className='bg-card rounded-lg border p-6'>
+                                    <h3 className='mb-4 text-lg font-semibold'>Security Settings</h3>
+                                    <div className='space-y-4'>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>Session Duration</label>
+                                            <input
+                                                type='number'
+                                                value='30'
+                                                className='ml-auto w-48 rounded border p-2'
+                                            />
+                                            <span className='text-muted-foreground text-xs'>days</span>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>Password Policy</label>
+                                            <select className='ml-auto w-48 rounded border p-2'>
+                                                <option>Strong (12+ chars)</option>
+                                                <option>Medium (8+ chars)</option>
+                                                <option>Weak (6+ chars)</option>
+                                            </select>
+                                        </div>
+                                        <div className='flex items-center justify-between'>
+                                            <label className='text-sm font-medium'>2FA Required</label>
+                                            <input type='checkbox' className='ml-auto w-48 rounded border p-2' />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className='bg-card rounded-lg border p-6'>
+                                <h3 className='mb-4 text-lg font-semibold'>Email Configuration</h3>
+                                <div className='space-y-4'>
+                                    <div className='flex items-center justify-between'>
+                                        <label className='text-sm font-medium'>SMTP Host</label>
+                                        <input
+                                            type='text'
+                                            value='smtp.resend.com'
+                                            className='ml-auto w-48 rounded border p-2'
+                                        />
+                                    </div>
+                                    <div className='flex items-center justify-between'>
+                                        <label className='text-sm font-medium'>From Email</label>
+                                        <input
+                                            type='email'
+                                            value='no-reply@booqing.my.id'
+                                            className='ml-auto w-48 rounded border p-2'
+                                        />
+                                    </div>
+                                    <div className='flex items-center justify-between'>
+                                        <label className='text-sm font-medium'>Email Template</label>
+                                        <select className='ml-auto w-48 rounded border p-2'>
+                                            <option>Default</option>
+                                            <option>Custom</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
